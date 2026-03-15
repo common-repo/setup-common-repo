@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  ci:
+    name: CI
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Release
+    needs: ci
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.COMMON_REPO_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.COMMON_REPO_BOT_PRIVATE_KEY }}
+          owner: common-repo
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
+      - uses: actions/setup-node@v5
+        with:
+          cache: npm
+          cache-dependency-path: ".releaserc.yaml"
+          node-version: lts/*
+
+      - name: Semantic Release
+        id: release
+        run: |
+          # Semantic Release
+          npm install --no-save --no-package-lock \
+            "@semantic-release/commit-analyzer" \
+            "@semantic-release/release-notes-generator" \
+            "@semantic-release/changelog" \
+            "@semantic-release/git" \
+            "@semantic-release/github" \
+            "semantic-release-major-tag" \
+            "conventional-changelog-conventionalcommits"
+          npx semantic-release > release.log 2>&1; rc=$?
+          cat release.log
+          if grep -q "There are no relevant changes, so no new version is released." release.log; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          elif [ "$rc" -ne 0 ]; then
+            echo "::error::semantic-release failed with exit code $rc"
+            exit 1
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+    outputs:
+      publish: ${{ steps.release.outputs.publish }}
