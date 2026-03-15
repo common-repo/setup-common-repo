@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/common-repo/setup-common-repo/compare/v1.0.0...v1.0.1) (2026-03-15)
+
+### Bug Fixes
+
+* **ci:** exclude CHANGELOG.md from markdownlint ([48b2097](https://github.com/common-repo/setup-common-repo/commit/48b209744d1a9b19f1b65791fa414b95c83502e8))
+* **ci:** rename commitlint config to .cjs for ESM compatibility ([39df4a5](https://github.com/common-repo/setup-common-repo/commit/39df4a54e73a0dc6f787f249a368fb7e6db916e2))
+
 ## 1.0.0 (2026-03-15)
 
 ### Miscellaneous
