@@ -1,0 +1,38 @@
+name: 'setup-common-repo'
+description: 'Install the common-repo binary'
+author: 'common-repo'
+
+inputs:
+  version:
+    description: 'Version to install (e.g., v0.28.1) or latest'
+    required: false
+    default: 'latest'
+
+outputs:
+  version:
+    description: 'The installed version of common-repo'
+    value: ${{ steps.info.outputs.version }}
+  path:
+    description: 'Path to the installed binary'
+    value: ${{ steps.info.outputs.path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install common-repo
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version != 'latest' && inputs.version || '' }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/common-repo/common-repo/main/install.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Capture install info
+      id: info
+      shell: bash
+      run: |
+        bin_path="$HOME/.local/bin/common-repo"
+        version=$("$bin_path" --version | awk '{print $2}')
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "path=$bin_path" >> $GITHUB_OUTPUT
