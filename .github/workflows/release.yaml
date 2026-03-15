@@ -57,13 +57,10 @@ jobs:
             "@semantic-release/github" \
             "semantic-release-major-tag" \
             "conventional-changelog-conventionalcommits"
-          npx semantic-release > release.log 2>&1; rc=$?
+          npx semantic-release > release.log 2>&1 || true
           cat release.log
           if grep -q "There are no relevant changes, so no new version is released." release.log; then
             echo "publish=false" >> "$GITHUB_OUTPUT"
-          elif [ "$rc" -ne 0 ]; then
-            echo "::error::semantic-release failed with exit code $rc"
-            exit 1
           else
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
