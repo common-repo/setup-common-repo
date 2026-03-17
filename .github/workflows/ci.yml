@@ -1,4 +1,4 @@
-name: CI
+name: Lint
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   pre-commit:
-    name: Pre-commit Checks
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
