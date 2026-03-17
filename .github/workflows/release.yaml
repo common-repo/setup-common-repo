@@ -18,9 +18,15 @@ jobs:
       contents: read
     uses: ./.github/workflows/ci.yml
 
+  test:
+    name: Test
+    permissions:
+      contents: read
+    uses: ./.github/workflows/test-action.yml
+
   release:
     name: Release
-    needs: ci
+    needs: [ci, test]
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -57,10 +63,13 @@ jobs:
             "@semantic-release/github" \
             "semantic-release-major-tag" \
             "conventional-changelog-conventionalcommits"
-          npx semantic-release > release.log 2>&1 || true
+          npx semantic-release > release.log 2>&1; rc=$?
           cat release.log
           if grep -q "There are no relevant changes, so no new version is released." release.log; then
             echo "publish=false" >> "$GITHUB_OUTPUT"
+          elif [ "$rc" -ne 0 ]; then
+            echo "::error::semantic-release failed with exit code $rc"
+            exit "$rc"
           else
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
