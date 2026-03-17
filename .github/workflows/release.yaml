@@ -12,21 +12,15 @@ permissions:
   pull-requests: write
 
 jobs:
-  lint:
-    name: Lint
+  ci:
+    name: CI
     permissions:
       contents: read
     uses: ./.github/workflows/ci.yml
 
-  test:
-    name: Test
-    permissions:
-      contents: read
-    uses: ./.github/workflows/test-action.yml
-
   release:
     name: Release
-    needs: [lint, test]
+    needs: ci
     permissions:
       contents: write
     runs-on: ubuntu-latest

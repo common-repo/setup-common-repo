@@ -1,4 +1,4 @@
-name: Lint
+name: CI
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  pre-commit:
+  lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
@@ -26,3 +26,60 @@ jobs:
           python-version: "3.x"
 
       - uses: pre-commit/action@v3.0.1
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Test 1: latest version
+      - name: Setup common-repo (latest)
+        id: setup-latest
+        uses: ./
+
+      - name: Verify latest install
+        run: |
+          # Verify common-repo command works and outputs a version
+          version_output=$(common-repo --version)
+          echo "common-repo --version: $version_output"
+          if ! echo "$version_output" | grep -qE '^common-repo [0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::common-repo --version did not match expected pattern"
+            exit 1
+          fi
+
+          # Verify cr alias produces same output
+          if [ "$(common-repo --version)" != "$(cr --version)" ]; then
+            echo "::error::cr alias output does not match common-repo output"
+            exit 1
+          fi
+          echo "cr alias verified: $(cr --version)"
+
+          # Verify outputs
+          echo "version output: ${{ steps.setup-latest.outputs.version }}"
+          echo "path output: ${{ steps.setup-latest.outputs.path }}"
+          if ! echo "${{ steps.setup-latest.outputs.version }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::version output does not match semver pattern"
+            exit 1
+          fi
+          if [ ! -x "${{ steps.setup-latest.outputs.path }}" ]; then
+            echo "::error::path output does not point to an executable"
+            exit 1
+          fi
+
+      # Test 2: pinned version
+      - name: Setup common-repo (pinned)
+        id: setup-pinned
+        uses: ./
+        with:
+          version: v0.28.1
+
+      - name: Verify pinned install
+        run: |
+          expected="0.28.1"
+          actual="${{ steps.setup-pinned.outputs.version }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::Expected version $expected but got $actual"
+            exit 1
+          fi
+          echo "Pinned version verified: $actual"
