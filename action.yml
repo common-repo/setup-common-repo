@@ -20,19 +20,11 @@ runs:
   using: composite
   steps:
     - name: Install common-repo
-      shell: bash
-      env:
-        VERSION: ${{ inputs.version != 'latest' && inputs.version || '' }}
-        GITHUB_TOKEN: ${{ github.token }}
-      run: |
-        curl -fsSL https://raw.githubusercontent.com/common-repo/common-repo/main/install.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Capture install info
       id: info
       shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        GITHUB_TOKEN: ${{ github.token }}
+        ACTION_PATH: ${{ github.action_path }}
       run: |
-        bin_path="$HOME/.local/bin/common-repo"
-        version=$("$bin_path" --version | awk '{print $2}')
-        echo "version=$version" >> $GITHUB_OUTPUT
-        echo "path=$bin_path" >> $GITHUB_OUTPUT
+        python3 "$ACTION_PATH/script/install.py"
