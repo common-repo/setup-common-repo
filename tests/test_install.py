@@ -2,6 +2,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import tarfile
 import tempfile
@@ -50,7 +51,8 @@ class InstallTests(unittest.TestCase):
             installer.install("latest", directory, "Linux", "x86_64", "test-token", fetch)
             self.assertEqual((Path(directory) / "common-repo").read_bytes(), payload)
             self.assertEqual((Path(directory) / "cr").read_bytes(), payload)
-            self.assertTrue((Path(directory) / "common-repo").stat().st_mode & 0o100)
+            if os.name != "nt":
+                self.assertTrue((Path(directory) / "common-repo").stat().st_mode & 0o100)
             self.assertEqual(len(list(Path(directory).iterdir())), 2)
         self.assertTrue(requests[0][0].endswith("/releases/latest"))
         self.assertEqual([token for _, token in requests], ["test-token", ""])
