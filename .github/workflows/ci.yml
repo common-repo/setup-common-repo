@@ -29,6 +29,17 @@ jobs:
 
   test:
     name: Test
+    runs-on: ubuntu-latest
+    needs: test-platforms
+    if: always()
+    steps:
+      - name: Require every platform to pass
+        env:
+          RESULT: ${{ needs.test-platforms.result }}
+        run: test "$RESULT" = success
+
+  test-platforms:
+    name: Install (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
